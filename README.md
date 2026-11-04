@@ -10,9 +10,14 @@ La ley que contiene a las demás es una sola: **se mide el efecto, no el registr
 
 ## Qué puedes verificar aquí
 
+El PDF y el Markdown de la nota depositada son los mismos bytes que se publicaron con el DOI. Se
+comprueban sin confiar en este repositorio:
+
 ```bash
-# el índice de doctrina cuadra con este árbol
-python tools/refrescar_indice_doctrina.py --check   # RC 0 = SIN DESFASE
+shasum -a 256 NOTA_COHERENCIA_VS_COMPLETITUD_20261103.pdf
+# c41e3dbec089a6777febbd62f93d323ccc2669406e7c52a85063bfcce5b9f650
+shasum -a 256 NOTA_COHERENCIA_VS_COMPLETITUD_20261103.md
+# ab787da7df098403c44f5291e76dc253f4a285c134e34af2abb5980a050f67ea
 ```
 
 Ninguna cifra de este repositorio viaja sin `archivo:línea` o sin el comando que la produce. Un
