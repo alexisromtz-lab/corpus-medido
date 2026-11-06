@@ -1,0 +1,78 @@
+# HUELLA-CM-COHERENCIA-CI-20261106
+# coherencia.yml — la coherencia interna de la vista publicada, medida en cada push.
+#
+# EL HUECO QUE PAGA: `badges/reglas.json` es el endpoint que lee el badge del perfil,
+# y nada lo cotejaba. Una cifra tecleada a mano en el badge, o una prosa que diga 56
+# mientras el manifiesto dice 58, viajaba al perfil sin que ningun instrumento
+# enrojeciera. El medidor ya mide las cuatro superficies (manifiesto · indice ·
+# prosa · endpoint); lo que faltaba era quien lo corra en cada cambio.
+#
+# LIMITE DECLARADO — el sujeto que NO vive aqui. La doctrina (`docs/doctrina/*.md`)
+# no esta en este repositorio: vive en `platino-labs`, que es privado. Por eso este
+# workflow NO puede detectar que la doctrina cambio, y no lo finge: lo publica como
+# NO_MEDIDO nombrando donde si se mide (`doctrina-publicada.yml`, del lado privado).
+# Un verde aqui significa "la vista publicada es coherente consigo misma", NO
+# significa "la vista publicada esta al dia". Son dos afirmaciones distintas y solo
+# la primera se puede pagar en un repositorio publico sin la doctrina dentro.
+#
+# LIMITE DECLARADO — el nombre de familia es posicional. `leer_doctrina` asigna el
+# nombre de la familia por el orden del indice; un archivo nuevo sin fila en el
+# indice entra con el nombre derivado de su archivo y el comparador lo nombra
+# FAMILIA_SOBRANTE. Es correcto que enrojezca, pero el nombre bueno lo escribe el
+# dueno en `INDICE_DOCTRINA.md`: ningun instrumento lo adivina.
+#
+# FALSADOR: `--self-test` ejerce 35 controles. Los que falsan la superficie 4 son
+# C18 (badge con cifra tecleada ⇒ RC 1, clase ENDPOINT_DESALINEADO), C19 (badge
+# ausente ⇒ RC 1, clase ENDPOINT_AUSENTE) y C20 (el escritor unico `--aplicar`
+# repara el badge ⇒ RC 0). Para falsarlo de verdad: en una rama, editar la cifra de
+# `badges/reglas.json` y ver el job rojo nombrando `badges/reglas.json`.
+#
+# COSTE: un job, tres pasos, ~40 s. El coste lo cobra la frecuencia del push, no el
+# tamano del commit: se empuja en bloque (A0.13).
+
+name: coherencia
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# `cancel-in-progress` paga una vez por rafaga y no por push: con corridas de ~40 s
+# solo se solapan dos empujones seguidos. Es compatible con batchear, no lo sustituye.
+concurrency:
+  group: coherencia-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  coherencia:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      # El instrumento antes que su medicion: si el medidor esta roto, un verde de
+      # `--check` no valdria nada. Un instrumento sin control negativo es el que
+      # reporta verde sobre un universo vacio.
+      - name: Controles del instrumento
+        run: python tools/medir_reglas.py --self-test
+
+      - name: Cotejo de las cuatro superficies
+        run: python tools/medir_reglas.py --check
+
+      # Se publica el limite en cada corrida, tambien en las verdes. Un limite que
+      # solo se escribe cuando falla se olvida, y el lector del badge no lo ve.
+      - name: Declarar el sujeto ausente (NO_MEDIDO)
+        if: always()
+        run: |
+          echo "NO_MEDIDO — la doctrina ('docs/doctrina/*.md') no vive en este repositorio."
+          echo "  sujeto de este workflow : la vista publicada contra si misma (4 superficies)"
+          echo "  sujeto NO medido aqui   : si la doctrina cambio desde este manifiesto"
+          echo "  donde si se mide        : alexisromtz-lab/platino-labs :: .github/workflows/doctrina-publicada.yml"
