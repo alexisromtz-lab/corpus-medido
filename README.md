@@ -7,14 +7,14 @@ framework ni una librería: es un conjunto de reglas de medición, compuertas de
 notas técnicas depositadas con DOI.
 
 La ley que contiene a las demás es una sola: **se mide el efecto, no el registro**. Todo lo demás
-—58 reglas en 7 familias— se deriva de ella o la acota. Cinco no se derivan: están en
+—57 reglas en 7 familias— se deriva de ella o la acota. Cinco no se derivan: están en
 [`MINIMAL_CORPUS.md`](MINIMAL_CORPUS.md) y el detalle está en [`INDICE_DOCTRINA.md`](INDICE_DOCTRINA.md).
 
 ## Qué puedes verificar aquí
 
 ## La cifra de arriba no está escrita a mano
 
-**58 reglas · 7 familias** no es texto: es lo que mide
+**57 reglas · 7 familias** no es texto: es lo que mide
 [`tools/medir_reglas.py`](tools/medir_reglas.py) contra el manifiesto
 [`docs/DOCTRINA_MANIFIESTO.json`](docs/DOCTRINA_MANIFIESTO.json), que trae cada nombre de regla y el
 blob de la familia que lo produce. Cualquiera puede reproducirlo y contradecirlo:
