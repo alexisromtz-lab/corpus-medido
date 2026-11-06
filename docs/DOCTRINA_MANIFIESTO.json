@@ -1,0 +1,127 @@
+{
+  "sujeto": "encabezados '## ' de docs/doctrina/*.md",
+  "comando": "python3 tools/medir_reglas.py --sujeto doctrinal --ruta /Users/marlene/platino-labs/docs/doctrina --emitir-manifiesto docs/DOCTRINA_MANIFIESTO.json",
+  "medido_en": "2026-11-06T19:37:29Z",
+  "origen": {
+    "repo": "platino-labs",
+    "commit": "a3f307b9",
+    "nota": "El texto de la doctrina no se publica aquí; este manifiesto publica los nombres y su cuenta, que es lo que el badge muestra."
+  },
+  "total_reglas": 58,
+  "familias": [
+    {
+      "familia": "Medición y procedencia",
+      "archivo": "01_medicion.md",
+      "reglas": 9,
+      "nombres": [
+        "MEDICIÓN CON BLOB",
+        "MEDICIÓN CON UNIDAD",
+        "RC CON CAUSA DECLARADA",
+        "VERIFICADOR CON RE-VERIFICACIÓN",
+        "AUDITORÍA CON BLOB",
+        "CAMPO COPIADO",
+        "ESTADO TRANSITORIO NO ES ESTADO DEL OBJETO",
+        "CLAVE VECINA NO REFUTA",
+        "UN RELOJ DE PARED NO ES UN RELOJ DE DURACIÓN"
+      ],
+      "blob": "225a61abb195492e2161ef26d8ff82c91848079f"
+    },
+    {
+      "familia": "Predicción",
+      "archivo": "02_prediccion.md",
+      "reglas": 6,
+      "nombres": [
+        "PREDICCIÓN PRE-REGISTRADA",
+        "PREDICCIÓN CON cota_error",
+        "PREDICCIÓN CON TERRENO DECLARADO",
+        "PREDICCIÓN NO EJERCITADA",
+        "ESTADOS Y MECANISMO DE PREDICCIÓN",
+        "PREDICCIÓN BIFURCADA"
+      ],
+      "blob": "ffb83f9d9654184860c17c21fea867fca00dd933"
+    },
+    {
+      "familia": "Instrumento",
+      "archivo": "03_instrumento.md",
+      "reglas": 13,
+      "nombres": [
+        "FALSO VERDE EN LA DIRECCIÓN PELIGROSA",
+        "EL DIFF QUE NO MIRA EL COMMIT",
+        "INSTRUMENTO VS PREDICCIÓN",
+        "FALSO ROJO",
+        "INSTRUMENTO CON SCOPE DECLARADO",
+        "NOMBRE EQUIVOCADO EN LA LITERATURA",
+        "AST O NADA",
+        "DESFASE DE VENTANA",
+        "PROTOCOLO DE SOLUCIÓN AUTOAUDITABLE",
+        "LA LÍNEA BASE NO ES UN DISCRIMINADOR DE AUTORÍA",
+        "UN AVISO ES NOMBRE, JUICIO Y STREAM",
+        "PLAZO MENOR QUE EL COSTE DEL SUJETO",
+        "UNA REGLA DECLARADA VENCE AL DEFAULT non_code"
+      ],
+      "blob": "be9fb1c71b9d604c7a517d1e58bf627187992a66"
+    },
+    {
+      "familia": "Commit y estado",
+      "archivo": "04_commit_y_estado.md",
+      "reglas": 11,
+      "nombres": [
+        "TURNO ATÓMICO",
+        "DRIFT DE HEAD ≠ COMMIT EN RAMA EQUIVOCADA",
+        "PROPIEDAD DE ARCHIVO SUCIO",
+        "COMMIT SIN ARRASTRE",
+        "ÍNDICE PRIVADO POR PESTAÑA",
+        "MECANISMO ADOPTADO A MEDIAS",
+        "COMMIT SIN ARRASTRE INSTRUMENTADO",
+        "MENSAJE DE COMMIT Y CERROJO POR GITDIR",
+        "LEY DE LA RANURA AUSENTE",
+        "EL GUARDIÁN NO PUEDE GUARDARSE A SÍ MISMO",
+        "Regla 51"
+      ],
+      "blob": "74aeaeb3ac33f80596fe94ae612800f7df432d95"
+    },
+    {
+      "familia": "Contrato y taxonomía RC",
+      "archivo": "05_contrato_y_rc.md",
+      "reglas": 11,
+      "nombres": [
+        "TAXONOMÍA DE RANGOS RC",
+        "TAXONOMÍA CON REGISTRO",
+        "CORRECCIÓN CON CADENA",
+        "MECANISMO SIN CONTRATO",
+        "NIVEL DE VERIFICACIÓN Y SU EVIDENCIA",
+        "AUTORREFERENCIA FALSABLE",
+        "TOMBSTONE SOLO PARA CLAIMS VIGENTES",
+        "EL TÉRMINO MEDIO",
+        "SQLite del despachador: quiescencia acotada de WAL vacío",
+        "Adenda 30-Oct-2026",
+        "A2.3"
+      ],
+      "blob": "07a081692810da30a49a07d351165e58ef1f2c84"
+    },
+    {
+      "familia": "Universo, lector y controles",
+      "archivo": "06_universo_y_lector.md",
+      "reglas": 3,
+      "nombres": [
+        "CONVENCIÓN CON LECTOR",
+        "DEFAULT NO_MEDIDO",
+        "SECCIÓN QUE APAGA EL CONTROL"
+      ],
+      "blob": "da94db52a80138acccdf6e67804db5a394d79749"
+    },
+    {
+      "familia": "Auditoría y negocio",
+      "archivo": "07_auditoria_y_negocio.md",
+      "reglas": 5,
+      "nombres": [
+        "BLOQUEO CON PLAZO",
+        "AUDITORÍA CON CAMINO",
+        "TIPO DE CAMINO",
+        "VENTANA TEMPORAL DECLARADA",
+        "ACTO PÚBLICO CON CHEQUEO DE EXISTENCIA PREVIA"
+      ],
+      "blob": "c1140548000d775f4fe6dd96219e3c24f0d358bb"
+    }
+  ]
+}

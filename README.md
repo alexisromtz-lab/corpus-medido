@@ -1,12 +1,31 @@
 # Corpus de metrología de sistemas
 
+[![doctrina](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Falexisromtz-lab%2Fcorpus-medido%2Fmain%2Fbadges%2Freglas.json&query=%24.message&label=doctrina&color=111111&style=flat-square)](docs/DOCTRINA_MANIFIESTO.json)
+
 Este repositorio es la **capa citable** del corpus con el que Platino Labs mide sistemas. No es un
 framework ni una librería: es un conjunto de reglas de medición, compuertas de código de retorno y
 notas técnicas depositadas con DOI.
 
 La ley que contiene a las demás es una sola: **se mide el efecto, no el registro**. Todo lo demás
-—56 reglas en 7 familias— se deriva de ella o la acota. Cinco no se derivan: están en
+—58 reglas en 7 familias— se deriva de ella o la acota. Cinco no se derivan: están en
 [`MINIMAL_CORPUS.md`](MINIMAL_CORPUS.md) y el detalle está en [`INDICE_DOCTRINA.md`](INDICE_DOCTRINA.md).
+
+## Qué puedes verificar aquí
+
+## La cifra de arriba no está escrita a mano
+
+**58 reglas · 7 familias** no es texto: es lo que mide
+[`tools/medir_reglas.py`](tools/medir_reglas.py) contra el manifiesto
+[`docs/DOCTRINA_MANIFIESTO.json`](docs/DOCTRINA_MANIFIESTO.json), que trae cada nombre de regla y el
+blob de la familia que lo produce. Cualquiera puede reproducirlo y contradecirlo:
+
+```bash
+python3 tools/medir_reglas.py --check      # RC 0 alineado · RC 1 deriva nombrada · RC 2 NO_MEDIDO
+python3 tools/medir_reglas.py --self-test  # 23 controles, incluidos los negativos
+```
+
+El badge de este repositorio lee [`badges/reglas.json`](badges/reglas.json), y ese archivo sólo lo
+reescribe el medidor. Una cifra que no puede contradecirse no es una medición.
 
 ## Qué puedes verificar aquí
 

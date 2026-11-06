@@ -264,7 +264,7 @@ publicar más fuerte en ese hilo — es otro hilo, con los mismos 3 filtros, o e
 lectores (dev.to tiene 11 artículos y 0 reacciones: es superficie, no distribución).
 
 **Dos decisiones que no son mías.** (a) `platino-labs` sigue **privado** (`isPrivate: true`, 0
-estrellas): el corpus de 56 reglas, gates y RC **no es citable** y todo comentario colocado aterriza
+estrellas): el corpus de 58 reglas, gates y RC **no es citable** y todo comentario colocado aterriza
 en el perfil, no en el material. (b) El motor `platino-engine` **no está registrado**
 (`~/Library/Application Support/Code/User/mcp.json` = 0 B): las cuatro lecturas de A2.1-R no pueden
 dispararse y cada consulta paga el fallback `bash`. Registrarlo es escritura fuera del árbol git ⇒
