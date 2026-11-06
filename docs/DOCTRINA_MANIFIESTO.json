@@ -1,10 +1,10 @@
 {
   "sujeto": "encabezados '## ' de docs/doctrina/*.md",
   "comando": "python3 tools/medir_reglas.py --sujeto doctrinal --ruta /Users/marlene/platino-labs/docs/doctrina --emitir-manifiesto docs/DOCTRINA_MANIFIESTO.json",
-  "medido_en": "2026-11-06T19:37:29Z",
+  "medido_en": "2026-11-06T20:20:07Z",
   "origen": {
-    "repo": "platino-labs",
-    "commit": "a3f307b9",
+    "repo": "alexisromtz-lab/platino-labs",
+    "commit": "1d2b5fc6ea47a0dec70328aa3eb4250883363d33",
     "nota": "El texto de la doctrina no se publica aquí; este manifiesto publica los nombres y su cuenta, que es lo que el badge muestra."
   },
   "total_reglas": 58,

@@ -266,9 +266,15 @@ def leer_minimal(ruta=MINIMAL):
 # Medición
 # --------------------------------------------------------------------------
 def medir(manifiesto=MANIFIESTO, indice=INDICE, documentos=DOCUMENTOS, minimal=MINIMAL,
-          raiz=RAIZ):
-    """Coteja todas las superficies contra el manifiesto. RC 0/1/2."""
+          raiz=RAIZ, endpoint_ruta=None):
+    """Coteja todas las superficies contra el manifiesto. RC 0/1/2.
+
+    El endpoint pertenece al corpus que lo publica: si no se declara, se busca bajo
+    `raiz`, no bajo el checkout desde el que corre el instrumento. Un endpoint
+    tomado del árbol del invocador mediría el badge de otro repositorio.
+    """
     manifiesto = Path(manifiesto)
+    endpoint_ruta = Path(endpoint_ruta) if endpoint_ruta else Path(raiz) / "badges" / "reglas.json"
     try:
         datos, total = leer_manifiesto(manifiesto)
         filas = leer_indice(indice)
@@ -331,6 +337,34 @@ def medir(manifiesto=MANIFIESTO, indice=INDICE, documentos=DOCUMENTOS, minimal=M
             "detalle": "%d encabezados · declara %d" % (mini["encabezados"], mini["declaradas"]),
         })
 
+    # Superficie 4 — el endpoint que lee el badge: la cifra publicada al mundo.
+    # Sin esta superficie `--check` puede estar verde mientras shields.io publica
+    # otra cifra: el defecto que el manifiesto vino a cerrar, una capa más afuera.
+    publicada = None
+    etiqueta = _ruta_visible(endpoint_ruta, raiz)
+    try:
+        publicada = leer_endpoint(endpoint_ruta)
+    except NoMedido as exc:
+        deriva.append({"superficie": etiqueta, "clase": "ENDPOINT_ILEGIBLE",
+                       "detalle": str(exc)})
+    else:
+        esperada = endpoint(total, n_familias)
+        if publicada is None:
+            deriva.append({
+                "superficie": etiqueta,
+                "clase": "ENDPOINT_AUSENTE",
+                "detalle": "sin endpoint: el badge publica su texto de reserva, no una medición",
+            })
+        else:
+            for campo in ("schemaVersion", "label", "message"):
+                if publicada.get(campo) != esperada[campo]:
+                    deriva.append({
+                        "superficie": etiqueta,
+                        "clase": "ENDPOINT_DESALINEADO",
+                        "detalle": "%s publica %r · manifiesto %r"
+                                   % (campo, publicada.get(campo), esperada[campo]),
+                    })
+
     informe = {
         "sujeto": "docs/DOCTRINA_MANIFIESTO.json :: reglas por familia",
         "origen": datos.get("origen", {}),
@@ -345,6 +379,7 @@ def medir(manifiesto=MANIFIESTO, indice=INDICE, documentos=DOCUMENTOS, minimal=M
             "indice_reglas": sum(len(f["nombres"]) for f in filas),
             "documentos_medidos": sorted({a["documento"] for a in figuras["reglas"]}),
             "minimal": mini,
+            "endpoint": publicada,
         },
         "deriva": deriva,
         "veredicto": "ALINEADO" if not deriva else "DERIVA",
@@ -363,6 +398,28 @@ def endpoint(total, n_familias, etiqueta="doctrina", color="111111"):
         "color": color,
         "cacheSeconds": 3600,
     }
+
+
+def leer_endpoint(ruta):
+    """El JSON que shields.io lee. `None` si no existe; NoMedido si no es legible."""
+    ruta = Path(ruta)
+    if not ruta.exists():
+        return None
+    try:
+        datos = json.loads(ruta.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise NoMedido("endpoint ilegible (%s): %s" % (ruta, exc))
+    if not isinstance(datos, dict):
+        raise NoMedido("endpoint no es un objeto JSON: %s" % ruta)
+    return datos
+
+
+def _ruta_visible(ruta, raiz):
+    """Ruta relativa a la raíz del corpus, para que la deriva nombre una superficie."""
+    try:
+        return str(Path(ruta).resolve().relative_to(Path(raiz).resolve()))
+    except ValueError:
+        return str(ruta)
 
 
 def aplicar(manifiesto=MANIFIESTO, indice=INDICE, documentos=DOCUMENTOS, destino=ENDPOINT,
@@ -448,6 +505,9 @@ def _fixture(directorio, familias, documento_total=None):
         "# Minimal\n\nEste archivo no es la constitución: %d reglas, %d familias.\n\n"
         "## no derivada uno\n\n## no derivada dos\n" % (total, len(familias)),
         encoding="utf-8")
+    (base / "badges" / "reglas.json").write_text(
+        json.dumps(endpoint(datos["total_reglas"], len(datos["familias"])), indent=2,
+                   ensure_ascii=False) + "\n", encoding="utf-8")
     return base
 
 
@@ -557,6 +617,69 @@ def self_test():
         clases = {d["clase"] for d in informe["deriva"]}
         controles.append(_caso("C11_no_derivadas_deriva", True, "NO_DERIVADAS_DESALINEADAS" in clases))
 
+        # C14 — el comparador ignora el reloj: `medido_en` distinto, cero deriva.
+        doctrinal = base / "docs" / "doctrina"
+        medido = construir_manifiesto(doctrinal, indice, "platino-labs", "abc1234", base / "m.json")
+        publicado = json.loads(json.dumps(medido))
+        publicado["medido_en"] = "1999-01-01T00:00:00Z"
+        controles.append(_caso("C14_reloj_no_es_deriva", 0, len(comparar_manifiestos(medido, publicado))))
+
+        # C15 — una cuenta que se mueve sí es deriva, y la clase se nombra.
+        publicado["total_reglas"] = 6
+        publicado["familias"][0]["reglas"] = 4
+        clases = {d["clase"] for d in comparar_manifiestos(medido, publicado)}
+        controles.append(_caso("C15_total_deriva", True, "TOTAL_DESALINEADO" in clases))
+        controles.append(_caso("C15_familia_deriva", True, "CUENTA_FAMILIA_DESALINEADA" in clases))
+
+        # C16 — el pin de origen es estado del objeto: otro commit, misma cuenta, deriva.
+        igual = json.loads(json.dumps(medido))
+        igual["origen"]["commit"] = "def5678"
+        clases = {d["clase"] for d in comparar_manifiestos(medido, igual)}
+        controles.append(_caso("C16_origen_desfasado", True, "ORIGEN_DESFASADO" in clases))
+
+        # C21 — el pin corto y el largo son la misma afirmación; el formato no es deriva.
+        largo = json.loads(json.dumps(medido))
+        largo["origen"]["commit"] = "abc1234" + "0" * 33
+        controles.append(_caso("C21_sha_corto_vs_largo", True,
+                               not comparar_manifiestos(medido, largo)))
+        corto_ajeno = json.loads(json.dumps(medido))
+        corto_ajeno["origen"]["commit"] = "abc1235"
+        controles.append(_caso("C21_prefijo_ajeno_deriva", True,
+                               bool(comparar_manifiestos(medido, corto_ajeno))))
+
+        # C17 — familia ausente en el publicado: se nombra, no se colapsa en el total.
+        sin_una = json.loads(json.dumps(medido))
+        sin_una["familias"] = sin_una["familias"][1:]
+        clases = {d["clase"] for d in comparar_manifiestos(medido, sin_una)}
+        controles.append(_caso("C17_familia_ausente", True, "FAMILIA_AUSENTE" in clases))
+
+        # C18 — el endpoint que lee shields.io es superficie medida: una cifra
+        # tecleada en el badge deriva aunque el manifiesto y la prosa coincidan.
+        # La prosa se repone primero: aquí la única variable es el badge.
+        (base / "MINIMAL_CORPUS.md").write_text(
+            "# Minimal\n\nEste archivo no es la constitución: 5 reglas, 2 familias.\n\n"
+            "## no derivada uno\n\n## no derivada dos\n", encoding="utf-8")
+        ep = base / "badges" / "reglas.json"
+        ep.write_text(json.dumps({"schemaVersion": 1, "label": "doctrina",
+                                  "message": "56 rules · 7 families"}), encoding="utf-8")
+        informe, rc = medir(manifiesto, indice, ("MINIMAL_CORPUS.md",), minimal, base)
+        clases = {d["clase"] for d in informe["deriva"]}
+        controles.append(_caso("C18_endpoint_tecleado_rc1", 1, rc))
+        controles.append(_caso("C18_clase", True, "ENDPOINT_DESALINEADO" in clases))
+
+        # C19 — sin endpoint el badge publica su texto de reserva: es deriva
+        # declarada, no NO_MEDIDO, porque el manifiesto dice cuál sería la cifra.
+        ep.unlink()
+        informe, rc = medir(manifiesto, indice, ("MINIMAL_CORPUS.md",), minimal, base)
+        clases = {d["clase"] for d in informe["deriva"]}
+        controles.append(_caso("C19_endpoint_ausente_rc1", 1, rc))
+        controles.append(_caso("C19_clase", True, "ENDPOINT_AUSENTE" in clases))
+
+        # C20 — el escritor único repara el endpoint, y la medición lo confirma.
+        aplicar(manifiesto, indice, ("MINIMAL_CORPUS.md",), ep, base)
+        _, rc = medir(manifiesto, indice, ("MINIMAL_CORPUS.md",), minimal, base)
+        controles.append(_caso("C20_aplicar_repara_endpoint", 0, rc))
+
     fallos = [c for c in controles if not c["ok"]]
     for c in controles:
         print("%-34s esperado=%-28r obtenido=%-28r %s"
@@ -569,13 +692,19 @@ def self_test():
 # --------------------------------------------------------------------------
 # CLI
 # --------------------------------------------------------------------------
-def emitir_manifiesto(ruta, directorio, indice=INDICE, origen_repo=None, origen_commit=None):
+def construir_manifiesto(directorio, indice=INDICE, origen_repo=None, origen_commit=None, ruta=None):
+    """Mide la doctrina y devuelve el manifiesto en memoria, sin escribir.
+
+    Separado de `emitir_manifiesto` para que `--comparar-manifiesto` pueda medir sin
+    tocar el disco: comparar no es publicar, y un comparador que escribe no puede
+    correr sobre un árbol ajeno.
+    """
     familias = leer_familias_del_indice(indice)
     salida = leer_doctrina(directorio, familias)
-    datos = {
+    return {
         "sujeto": "encabezados '## ' de docs/doctrina/*.md",
         "comando": "python3 tools/medir_reglas.py --sujeto doctrinal --ruta %s --emitir-manifiesto %s"
-                   % (directorio, ruta),
+                   % (directorio, ruta or "PATH"),
         "medido_en": medido_ahora(),
         "origen": {
             "repo": origen_repo or "NO_MEDIDO",
@@ -586,10 +715,78 @@ def emitir_manifiesto(ruta, directorio, indice=INDICE, origen_repo=None, origen_
         "total_reglas": sum(f["reglas"] for f in salida),
         "familias": salida,
     }
+
+
+def emitir_manifiesto(ruta, directorio, indice=INDICE, origen_repo=None, origen_commit=None):
+    datos = construir_manifiesto(directorio, indice, origen_repo, origen_commit, ruta)
     destino = Path(ruta)
     destino.parent.mkdir(parents=True, exist_ok=True)
     destino.write_text(json.dumps(datos, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     return datos
+
+
+def _firma_familias(datos):
+    """{familia: (archivo, reglas)}, tolerante al orden y al formato del lado publicado."""
+    firmas = {}
+    for f in datos.get("familias") or []:
+        if not isinstance(f, dict):
+            continue
+        reglas = f.get("reglas")
+        if reglas is None and isinstance(f.get("nombres"), list):
+            reglas = len(f["nombres"])
+        firmas[f.get("familia")] = (f.get("archivo") or "", reglas)
+    return firmas
+
+
+def _mismo_commit(a, b):
+    """Un sha corto y el largo son la MISMA afirmación; dos prefijos distintos no.
+
+    El manifiesto se emite a mano con `git rev-parse --short` (8 caracteres) y una
+    corrida de CI dispone de `GITHUB_SHA` (40). Compararlos por igualdad textual
+    enrojece el pin por formato y no por deriva, que es el falso rojo que enseña a
+    ignorar el rojo. Se comparan por prefijo común y se exige un mínimo de 7 para
+    que una coincidencia de 4 caracteres no pase por identidad.
+    """
+    if not a or not b:
+        return a == b
+    a, b = str(a).strip().lower(), str(b).strip().lower()
+    n = min(len(a), len(b))
+    return n >= 7 and a[:n] == b[:n]
+
+
+def comparar_manifiestos(medido, publicado):
+    """Deriva entre el manifiesto recién medido y el publicado.
+
+    `medido_en` NO se compara: es reloj de pared, no estado del objeto — dos
+    corridas sobre la misma doctrina difieren en ese campo y coinciden en todo lo
+    demás. Lo que sí se compara es `origen.commit`: un manifiesto que declara otro
+    commit no describe a éste, aunque las cuentas coincidan.
+    """
+    deriva = []
+
+    def _anota(clase, detalle):
+        deriva.append({"superficie": "manifiesto_publicado", "clase": clase, "detalle": detalle})
+
+    if medido.get("total_reglas") != publicado.get("total_reglas"):
+        _anota("TOTAL_DESALINEADO", "medido %r · publicado %r"
+               % (medido.get("total_reglas"), publicado.get("total_reglas")))
+
+    commit_medido = (medido.get("origen") or {}).get("commit")
+    commit_publicado = (publicado.get("origen") or {}).get("commit")
+    if not _mismo_commit(commit_medido, commit_publicado):
+        _anota("ORIGEN_DESFASADO", "medido %s · publicado %s"
+               % (commit_medido or "NO_MEDIDO", commit_publicado or "NO_MEDIDO"))
+
+    nuestro, suyo = _firma_familias(medido), _firma_familias(publicado)
+    for nombre in sorted(set(nuestro) - set(suyo), key=str):
+        _anota("FAMILIA_AUSENTE", "%s (%s reglas)" % (nombre, nuestro[nombre][1]))
+    for nombre in sorted(set(suyo) - set(nuestro), key=str):
+        _anota("FAMILIA_SOBRANTE", "%s (%s reglas)" % (nombre, suyo[nombre][1]))
+    for nombre in sorted(set(nuestro) & set(suyo), key=str):
+        if nuestro[nombre][1] != suyo[nombre][1]:
+            _anota("CUENTA_FAMILIA_DESALINEADA", "%s medido %s · publicado %s"
+                   % (nombre, nuestro[nombre][1], suyo[nombre][1]))
+    return deriva
 
 
 def main(argv=None):
@@ -597,6 +794,8 @@ def main(argv=None):
     p.add_argument("--sujeto", choices=("manifiesto", "doctrinal"), default="manifiesto")
     p.add_argument("--ruta", default=None, help="directorio doctrinal (sujeto=doctrinal)")
     p.add_argument("--emitir-manifiesto", metavar="PATH", default=None)
+    p.add_argument("--comparar-manifiesto", metavar="PATH", default=None,
+                   help="compara la doctrina medida con el manifiesto publicado (RC 0/1/2)")
     p.add_argument("--origen-repo", default=None)
     p.add_argument("--origen-commit", default=None)
     p.add_argument("--manifiesto", default=str(MANIFIESTO))
@@ -623,6 +822,25 @@ def main(argv=None):
             print("NO_MEDIDO: %s" % exc, file=sys.stderr)
             return 2
         total = sum(f["reglas"] for f in salida)
+        if args.comparar_manifiesto:
+            try:
+                publicado = json.loads(Path(args.comparar_manifiesto).read_text(encoding="utf-8"))
+            except (OSError, ValueError) as exc:
+                print("NO_MEDIDO: no se pudo leer el manifiesto publicado (%s): %s"
+                      % (args.comparar_manifiesto, exc), file=sys.stderr)
+                return 2
+            medido = construir_manifiesto(args.ruta, args.indice, args.origen_repo,
+                                          args.origen_commit, args.comparar_manifiesto)
+            deriva = comparar_manifiestos(medido, publicado)
+            if not deriva:
+                print("PUBLICADO ALINEADO: %d reglas en %d familias · origen %s"
+                      % (medido["total_reglas"], len(medido["familias"]),
+                         medido["origen"]["commit"]))
+                return 0
+            print("DERIVA PUBLICADA (%d):" % len(deriva))
+            for d in deriva:
+                print("  · %-26s %-28s %s" % (d["superficie"], d["clase"], d["detalle"]))
+            return 1
         if args.emitir_manifiesto:
             datos = emitir_manifiesto(args.emitir_manifiesto, args.ruta, args.indice,
                                       args.origen_repo, args.origen_commit)
@@ -638,6 +856,10 @@ def main(argv=None):
         print("RC 20: --emitir-manifiesto exige --sujeto doctrinal --ruta DIR", file=sys.stderr)
         return 20
 
+    if args.comparar_manifiesto:
+        print("RC 20: --comparar-manifiesto exige --sujeto doctrinal --ruta DIR", file=sys.stderr)
+        return 20
+
     if args.aplicar:
         try:
             escritos = aplicar(args.manifiesto, args.indice, DOCUMENTOS, args.endpoint or ENDPOINT)
@@ -648,7 +870,8 @@ def main(argv=None):
             print("ESCRITO: %s" % ruta)
         return 0
 
-    informe, rc = medir(args.manifiesto, args.indice, DOCUMENTOS, args.minimal)
+    informe, rc = medir(args.manifiesto, args.indice, DOCUMENTOS, args.minimal,
+                        endpoint_ruta=args.endpoint or ENDPOINT)
     if args.endpoint and rc == 0:
         destino = Path(args.endpoint)
         destino.parent.mkdir(parents=True, exist_ok=True)
@@ -672,7 +895,7 @@ def main(argv=None):
                 for d in informe["deriva"]:
                     print("  · %-26s %-28s %s" % (d["superficie"], d["clase"], d["detalle"]))
             else:
-                print("ALINEADO: manifiesto == índice == documentos. RC 0.")
+                print("ALINEADO: manifiesto == índice == documentos == endpoint. RC 0.")
     if args.check:
         return rc
     return rc
