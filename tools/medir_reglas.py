@@ -680,6 +680,18 @@ def self_test():
         _, rc = medir(manifiesto, indice, ("MINIMAL_CORPUS.md",), minimal, base)
         controles.append(_caso("C20_aplicar_repara_endpoint", 0, rc))
 
+        # C22 — el comando publicado no hereda la ruta absoluta de quien lo invoca.
+        # En CI sería `$GITHUB_WORKSPACE/docs/doctrina` y en una simulación
+        # `/tmp/...`; las dos se leen como reproducibles sin serlo.
+        m = construir_manifiesto(base / "docs" / "doctrina", indice,
+                                 origen_repo="r/x", origen_commit="a" * 40)
+        controles.append(_caso("C22_sin_ruta_absoluta", False, str(base) in m["comando"]))
+        controles.append(_caso("C22_comando_canonico", True,
+                               "--ruta docs/doctrina" in m["comando"]
+                               and "--emitir-manifiesto docs/DOCTRINA_MANIFIESTO.json" in m["comando"]))
+        controles.append(_caso("C22_comando_lleva_origen", True,
+                               "r/x" in m["comando"] and "a" * 40 in m["comando"]))
+
     fallos = [c for c in controles if not c["ok"]]
     for c in controles:
         print("%-34s esperado=%-28r obtenido=%-28r %s"
@@ -703,8 +715,16 @@ def construir_manifiesto(directorio, indice=INDICE, origen_repo=None, origen_com
     salida = leer_doctrina(directorio, familias)
     return {
         "sujeto": "encabezados '## ' de docs/doctrina/*.md",
-        "comando": "python3 tools/medir_reglas.py --sujeto doctrinal --ruta %s --emitir-manifiesto %s"
-                   % (directorio, ruta or "PATH"),
+        # HUELLA-MEDIDOR-COMANDO-CANONICO-20261106
+        # El comando publicado no hereda la ruta absoluta de quien lo invoca: en CI
+        # seria `$GITHUB_WORKSPACE/docs/doctrina` y en una simulación `/tmp/...`, y
+        # las dos se leen como reproducibles sin serlo. Publica rutas relativas a su
+        # raíz y `desde` declara de qué raíz son y qué repo vive en `--ruta`.
+        "comando": "python3 tools/medir_reglas.py --sujeto doctrinal --ruta docs/doctrina "
+                   "--emitir-manifiesto docs/DOCTRINA_MANIFIESTO.json "
+                   "--origen-repo %s --origen-commit %s"
+                   % (origen_repo or "NO_MEDIDO", origen_commit or "NO_MEDIDO"),
+        "desde": "raíz de corpus-medido; `--ruta` es el `docs/doctrina` de `origen.repo`",
         "medido_en": medido_ahora(),
         "origen": {
             "repo": origen_repo or "NO_MEDIDO",
