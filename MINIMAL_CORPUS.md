@@ -2,7 +2,7 @@
 
 <!-- HUELLA-MINIMAL-CORPUS-LEY-EFECTO-20261101 -->
 
-**Este archivo no es la constitución.** La constitución es [`AGENTS.md`](AGENTS.md): 56 reglas, 7 familias. Este archivo es un **filtro**, no un reemplazo: nombra la ley de la que las 56 son casos y conserva sólo las reglas que **no** se deducen de ella. No copia ninguna: las apunta por ruta.
+**Este archivo no es la constitución.** La constitución es [`AGENTS.md`](AGENTS.md): 57 reglas, 7 familias. Este archivo es un **filtro**, no un reemplazo: nombra la ley de la que las 57 son casos y conserva sólo las reglas que **no** se deducen de ella. No copia ninguna: las apunta por ruta.
 
 ## Ley 1 — se mide el efecto, no el registro
 

@@ -47,7 +47,7 @@ Se abre **al cerrar**, no al arrancar: la mudanza retiró **4 578 B** del prefij
 (`git cat-file -s`: 31 828 → 27 250 B de `AGENTS.md`, ≈ **1 200 tok** por petición
 a razón de 3 813 car/tok, `tools/presupuesto_sesion.py` P1).
 
-A0 **no** sustituye a A2.1 ni a las 56 reglas: ordena **qué se lee antes**, no **cómo se mide**.
+A0 **no** sustituye a A2.1 ni a las 57 reglas: ordena **qué se lee antes**, no **cómo se mide**.
 
 ### A0.99 — Fast-Track de Configuración Local
 <!-- HUELLA-A099-FAST-TRACK-LOCAL-20261101 -->
@@ -202,14 +202,14 @@ Carta de posición, no mapa: esto es lo que cambia conducta **antes** de la prim
 
 **Frontera entre repos**
 
-- `platino-labs` — el corpus: las 56 reglas, el contrato de RC, los gates de `tools/` y las actas. Entrada: este archivo.
+- `platino-labs` — el corpus: las 57 reglas, el contrato de RC, los gates de `tools/` y las actas. Entrada: este archivo.
 - `primer/ast-channel-router` — el motor: el extractor `AST`, el grafo de ciclos, el índice de adyacencia. Entrada: su `README.md`.
 - El motor **obedece** al corpus; el corpus **no vive** en el motor.
 
 **Prueba de posición: comando → esperado → fallo**
 
     .venv/bin/python tools/refrescar_indice_doctrina.py --check
-    → SIN DESFASE: 56 reglas · 7 familias · sujeto HEAD. Cero escrituras.  (RC 0)
+    → SIN DESFASE: 57 reglas · 7 familias · sujeto HEAD. Cero escrituras.  (RC 0)
 
 - **RC 1** — índice desincronizado: el tool nombra la celda culpable y el remedio (`--aplicar`). Falla el índice, no el agente.
 - **RC 127** — no existe `.venv/bin/python`: falla el **instrumento** (intérprete declarado, `requires-python >= 3.10`). No se declara incumplimiento del agente ni se certifica nada.
